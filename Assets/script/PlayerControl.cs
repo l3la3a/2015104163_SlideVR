@@ -17,6 +17,13 @@ public class PlayerControl : MonoBehaviour
 
     Rigidbody rig;
 
+
+    public int speedForward = 12;
+    public int speedSide = 6;
+
+    private float dirX = 0;
+    private float dirZ = 0;
+
     void Start()
     {
         rig = this.GetComponent<Rigidbody>();
@@ -24,6 +31,8 @@ public class PlayerControl : MonoBehaviour
         inputRight = false;
         inputUp = false;
         moveSpeed = new float[4]; //0=forward, 1=left, 2=right
+
+        inputUp = true;
 
 
     }
@@ -57,19 +66,22 @@ public class PlayerControl : MonoBehaviour
 
     void Update()
     {
+
+        MovePlayer();
+
         if (back) {
 
             rig.MovePosition(rig.position + (-1)*transform.forward * collisionSpeed * Time.deltaTime);
-            moveSpeed[0] = -2;
+            moveSpeed[0] = -1;
             back = false; 
 
         }
         // keydown
-        if (Input.GetKey(KeyCode.UpArrow)) {
+        //if (Input.GetKey(KeyCode.UpArrow)) {
 
             // 키입력이 아닌 자동움직임으로 변화시킬것. (지금은 키입력 = Start)
 
-            inputUp = true;
+            //inputUp = true;
             if (moveSpeed[0] <= maxMoveSpeed)
             {
                 moveSpeed[0] += speedIncreaseSpeed;
@@ -78,7 +90,7 @@ public class PlayerControl : MonoBehaviour
                 moveSpeed[0] = maxMoveSpeed;
             }
             //transform.localScale = new Vector3(1, 1, 1);
-        }
+        //}
         if (Input.GetKey(KeyCode.LeftArrow)) {
             if (inputRight) {
                 inputRight = false;
@@ -123,6 +135,65 @@ public class PlayerControl : MonoBehaviour
         }
         
     }
+
+    void MovePlayer()
+    {
+        Debug.Log("무브플레이어");
+        dirX = 0; //좌우이동방향  
+        dirZ = 0; //전진후진이동방향
+
+        if (OVRInput.Get(OVRInput.Touch.PrimaryThumbstick))
+        {
+            Debug.Log("오큘러스인풋");
+            Vector2 coord = OVRInput.Get(OVRInput.Axis2D.PrimaryThumbstick);
+
+            var absX = Mathf.Abs(coord.x);
+            var absY = Mathf.Abs(coord.y);
+
+            if (absX > absY)
+            {
+                //right
+                if (coord.x > 0)
+                {
+                    
+                    dirX += 1;
+                }
+                else
+                {
+                    dirX = -1;
+
+                    
+
+                }
+            }
+            else
+            {
+                if (coord.y > 0)
+                {
+                    //dirZ = +1;
+                    if (inputLeft)
+                    {
+                        inputLeft = false;
+                    }
+                    inputRight = true;
+                }
+                else
+                {
+
+                    if (inputRight)
+                    {
+                        inputRight = false;
+                    }
+                    inputLeft = true;
+                    //dirZ = -1;
+                }
+            }
+            Vector3 moveDir = new Vector3(dirX * speedSide, 0, dirZ * speedForward);
+            transform.Translate(moveDir * Time.smoothDeltaTime);
+        }
+
+    }
+
     private void FixedUpdate()
     {
         // AddForce를 적용하면 관성에의해 회전되므로 회전을 막기위해 오브젝트스페이스계의 transform 사용함
